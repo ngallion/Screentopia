@@ -1,0 +1,18 @@
+{
+  "name": "screentopia",
+  "version": "1.0.0",
+  "description": "Cross-platform wallpaper slideshow",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daniel Gospodinow",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "image-downloader": "^3.4.2",
+    "node-fetch": "^2.6.0",
+    "node-schedule": "^1.3.2",
+    "wallpaper": "^4.4.1"
+  }
+}
