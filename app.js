@@ -11,10 +11,11 @@ const imageDirectoryCapacity = 10;
 const imageResolution = "1920x1020";
 const imageCategories = ["nature"];
 
-(async function () {
-    await manageFilesystem();
+schedule.scheduleJob("0 * * * *", async () => {
+    await ensureImagesFolder();
+    await cleanupImages();
     await updateBackground();
-})();
+});
 
 async function updateBackground() {
     console.log("Starting wallpaper change procedure ...");
@@ -30,14 +31,17 @@ async function updateBackground() {
     }
 }
 
-async function manageFilesystem() {
-    console.log("Cleaning up space ...");
-
+async function cleanupImages() {
     const images = fs.readdirSync(imageDirectory);
     if (images.length >= imageDirectoryCapacity) {
+        console.log("Cleaning up space ...");
         fs.unlinkSync(imageDirectory + "/" + images.pop());
     }
 }
 
-// schedule.scheduleJob("0 * * * *", async () => {
-// });
+async function ensureImagesFolder() {
+    if (!fs.existsSync(imageDirectory)) {
+        console.log("Creating folder for image storage ...");
+        fs.mkdirSync(imageDirectory);
+    }
+}
