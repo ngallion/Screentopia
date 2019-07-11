@@ -8,8 +8,8 @@ const fs = require("fs");
 
 const imageDirectory = "./images";
 const imageDirectoryCapacity = 10;
-const imageResolution = "1920x1080";
-const imageCategories = ["nature"];
+const imageResolution = process.argv[2];
+const imageCategories = process.argv[3];
 
 schedule.scheduleJob("0 * * * *", async () => {
     await ensureImagesFolder();
@@ -21,7 +21,7 @@ async function updateBackground() {
     console.log("Starting wallpaper change procedure ...");
 
     try {
-        const imageResponse = await fetch(`https://source.unsplash.com/featured/${imageResolution}?${imageCategories.join(",")}`);
+        const imageResponse = await fetch(`https://source.unsplash.com/featured/${imageResolution}?${imageCategories}`);
         const image = await download.image({ url: imageResponse.url, dest: imageDirectory });
         await wallpaper.set(image.filename);
 
