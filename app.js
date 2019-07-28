@@ -2,41 +2,84 @@
 
 const fetch = require("node-fetch");
 const download = require("image-downloader");
-const wallpaper = require("wallpaper");
 const schedule = require("node-schedule");
 const fs = require("fs");
+const uuid = require("uuid/v4");
+const _ = require("lodash");
+const moment = require("moment");
+
+function getCategoryByTimeOfDay() {
+    const currentHour = moment().format("h");
+    const isAM = moment().format("A") === "AM";
+    return isAM ? "sunrise" 
+        : parseInt(currentHour) < 5 ? "nature" 
+        : parseInt(currentHour) < 8 ? "sunset" 
+        : "night"
+}
 
 const imageDirectory = "./images";
 const imageDirectoryCapacity = 10;
 const imageResolution = process.argv[2];
-const imageCategories = process.argv[3];
+let imageCategory = process.argv[3] || getCategoryByTimeOfDay();
 
-schedule.scheduleJob("0 * * * *", async () => {
-    await ensureImagesFolder();
-    await cleanupImages();
-    await updateBackground();
+function updateCategory() {
+    imageCategory = process.argv[3] || getCategoryByTimeOfDay();
+    console.log(`Updated category to ${imageCategory}.`);
+}
+
+updateBackgroundDirectory(imageCategory);
+
+schedule.scheduleJob(`*/${imageDirectoryCapacity} * * * * `, async () => {
+  updateBackgroundDirectory(imageCategory);
 });
 
-async function updateBackground() {
-    console.log("Starting wallpaper change procedure ...");
+schedule.scheduleJob("0 6 * * * ", () => {
+  updateCategory();
+});
+
+schedule.scheduleJob("0 12 * * * ", () => {
+  updateCategory();
+});
+
+schedule.scheduleJob("0 17 * * * ", () => {
+  updateCategory();
+});
+
+schedule.scheduleJob("0 20 * * * ", () => {
+  updateCategory();
+});
+
+async function updateBackgroundDirectory(imageCategory) {
+    console.log(`Getting new background images of ${imageCategory}`)
+    await ensureImagesFolder();
+    await deleteCurrentPhotos();
+    _.times(imageDirectoryCapacity, async () => {
+        _.delay(fetchPhoto, 3000, imageCategory);
+    });
+}
+
+async function fetchPhoto(imageCategory) {
+    console.log("Fetching image ...");
 
     try {
-        const imageResponse = await fetch(`https://source.unsplash.com/featured/${imageResolution}?${imageCategories}`);
-        const image = await download.image({ url: imageResponse.url, dest: imageDirectory });
-        await wallpaper.set(image.filename);
+        const imageResponse = await fetch(`https://source.unsplash.com/featured/${imageResolution}?${imageCategory}`);
+        await download.image({ url: imageResponse.url, dest: `${imageDirectory}/${uuid()}.jpg` });
 
-        console.log("Wallpaper changed successfully!");
+        console.log("Image fetched successfully!");
     } catch (e) {
-        console.error("Failed to fetch an image and set it as a background!", e);
+        console.error("Failed to fetch an image!", e);
     }
 }
 
-async function cleanupImages() {
+async function deleteCurrentPhotos() {
     const images = fs.readdirSync(imageDirectory);
-    if (images.length >= imageDirectoryCapacity) {
-        console.log("Cleaning up space ...");
-
-        fs.unlinkSync(imageDirectory + "/" + images.pop());
+    console.log("Nuking current images ...")
+    try {
+        images.forEach(img =>
+            _.delay(fs.unlinkSync, 2000, imageDirectory + "/" + img)
+        );
+    } catch (e) {
+        console.error("Nuking failed!", e);
     }
 }
 
