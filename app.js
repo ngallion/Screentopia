@@ -9,12 +9,21 @@ const _ = require("lodash");
 const moment = require("moment");
 
 function getCategoryByTimeOfDay() {
-    const currentHour = moment().format("h");
-    const isAM = moment().format("A") === "AM";
-    return isAM ? "sunrise" 
-        : parseInt(currentHour) < 5 ? "nature" 
-        : parseInt(currentHour) < 8 ? "sunset" 
-        : "night"
+  const currentHour = moment().hour();
+  switch(true) {
+    case (currentHour > 5 && currentHour <= 9):
+      return "sunrise";
+    case (currentHour > 9 && currentHour <= 13):
+      return "spring";
+    case (currentHour > 13 && currentHour <= 16):
+      return "nature";
+    case (currentHour > 16 && currentHour <= 19):
+      return "sunset";
+    case (currentHour > 19 && currentHour <= 23):
+      return "night";
+    default:
+      return "stars";
+  }
 }
 
 const imageDirectory = "./images";
